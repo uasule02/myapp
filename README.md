@@ -1,2 +1,2 @@
 # myapp
-React Natiive app
+React Native app

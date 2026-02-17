@@ -1,10 +1,10 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const { app } = require('electron');
+import Database from 'better-sqlite3';
+import path from 'path';
+import { app } from 'electron';
 
 let db = null;
 
-function getDatabase() {
+export function getDatabase() {
   if (!db) {
     const dbPath = path.join(app.getPath('userData'), 'pos-database.sqlite3');
     db = new Database(dbPath);
@@ -14,11 +14,9 @@ function getDatabase() {
   return db;
 }
 
-function closeDatabase() {
+export function closeDatabase() {
   if (db) {
     db.close();
     db = null;
   }
 }
-
-module.exports = { getDatabase, closeDatabase };

@@ -1,6 +1,6 @@
-const { getDatabase } = require('./connection');
+import { getDatabase } from './connection.js';
 
-function runMigrations() {
+export function runMigrations() {
   const db = getDatabase();
 
   db.exec(`
@@ -63,7 +63,6 @@ function runMigrations() {
     );
   `);
 
-  // Seed default settings
   const insertSetting = db.prepare(
     'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)'
   );
@@ -78,5 +77,3 @@ function runMigrations() {
   });
   seedSettings();
 }
-
-module.exports = { runMigrations };

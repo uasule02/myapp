@@ -1,12 +1,12 @@
-const { ipcMain } = require('electron');
-const inventoryRepo = require('./database/inventory-repo');
-const salesRepo = require('./database/sales-repo');
-const syncRepo = require('./database/sync-repo');
-const settingsRepo = require('./database/settings-repo');
-const { printReceipt, getAvailablePrinters, getReceiptHTML } = require('./printing');
-const axios = require('axios');
+import { ipcMain } from 'electron';
+import * as inventoryRepo from './database/inventory-repo.js';
+import * as salesRepo from './database/sales-repo.js';
+import * as syncRepo from './database/sync-repo.js';
+import * as settingsRepo from './database/settings-repo.js';
+import { printReceipt, getAvailablePrinters, getReceiptHTML } from './printing.js';
+import axios from 'axios';
 
-function registerAllHandlers(mainWindow) {
+export function registerAllHandlers(getMainWindow) {
   // ── Inventory ──
   ipcMain.handle('inventory:getAll', (_event, filters) => {
     return inventoryRepo.getAll(filters);
@@ -115,6 +115,7 @@ function registerAllHandlers(mainWindow) {
   });
 
   ipcMain.handle('print:getPrinters', async () => {
+    const mainWindow = getMainWindow();
     return await getAvailablePrinters(mainWindow);
   });
 
@@ -122,5 +123,3 @@ function registerAllHandlers(mainWindow) {
     return getReceiptHTML(saleId);
   });
 }
-
-module.exports = { registerAllHandlers };

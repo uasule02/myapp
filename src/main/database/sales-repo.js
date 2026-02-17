@@ -1,8 +1,8 @@
-const { getDatabase } = require('./connection');
-const { v4: uuidv4 } = require('uuid');
-const syncRepo = require('./sync-repo');
+import { getDatabase } from './connection.js';
+import { v4 as uuidv4 } from 'uuid';
+import { logChange } from './sync-repo.js';
 
-function createSale(saleData) {
+export function createSale(saleData) {
   const db = getDatabase();
   const { items, paymentMethod, amountPaid, notes } = saleData;
 
@@ -10,7 +10,6 @@ function createSale(saleData) {
     const saleId = uuidv4();
     let totalAmount = 0;
 
-    // Validate stock and calculate total
     const itemDetails = [];
     for (const cartItem of items) {
       const inventoryItem = db.prepare(
@@ -32,13 +31,11 @@ function createSale(saleData) {
     const changeAmount = Math.max(0, (amountPaid || totalAmount) - totalAmount);
     const now = new Date().toISOString();
 
-    // Insert sale
     db.prepare(`
       INSERT INTO sales (id, total_amount, payment_method, amount_paid, change_amount, notes, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(saleId, totalAmount, paymentMethod || 'cash', amountPaid || totalAmount, changeAmount, notes || '', now);
 
-    // Insert sale items and update inventory
     for (const detail of itemDetails) {
       const saleItemId = uuidv4();
       db.prepare(`
@@ -46,23 +43,20 @@ function createSale(saleData) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).run(saleItemId, saleId, detail.id, detail.name, detail.price, detail.cartQuantity, detail.subtotal, now);
 
-      // Decrement inventory
       db.prepare(
         'UPDATE inventory_items SET quantity = quantity - ?, updated_at = ? WHERE id = ?'
       ).run(detail.cartQuantity, now, detail.id);
 
-      // Log sync
-      syncRepo.logChange('sale_items', saleItemId, 'INSERT', {
+      logChange('sale_items', saleItemId, 'INSERT', {
         id: saleItemId, sale_id: saleId, item_id: detail.id, item_name: detail.name,
         item_price: detail.price, quantity: detail.cartQuantity, subtotal: detail.subtotal
       });
-      syncRepo.logChange('inventory_items', detail.id, 'UPDATE', {
+      logChange('inventory_items', detail.id, 'UPDATE', {
         id: detail.id, quantity: detail.quantity - detail.cartQuantity
       });
     }
 
-    // Log sale to sync
-    syncRepo.logChange('sales', saleId, 'INSERT', {
+    logChange('sales', saleId, 'INSERT', {
       id: saleId, total_amount: totalAmount, payment_method: paymentMethod || 'cash',
       amount_paid: amountPaid || totalAmount, change_amount: changeAmount, notes: notes || '', created_at: now
     });
@@ -79,7 +73,7 @@ function createSale(saleData) {
   return createSaleTransaction();
 }
 
-function getAll(filters = {}) {
+export function getAll(filters = {}) {
   const db = getDatabase();
   let sql = `
     SELECT s.*, COUNT(si.id) as item_count
@@ -106,7 +100,7 @@ function getAll(filters = {}) {
   return db.prepare(sql).all(...params);
 }
 
-function getSaleDetail(id) {
+export function getSaleDetail(id) {
   const db = getDatabase();
   const sale = db.prepare('SELECT * FROM sales WHERE id = ?').get(id);
   if (!sale) return null;
@@ -115,7 +109,7 @@ function getSaleDetail(id) {
   return { ...sale, items };
 }
 
-function getDashboardStats() {
+export function getDashboardStats() {
   const db = getDatabase();
 
   const today = db.prepare(`
@@ -159,5 +153,3 @@ function getDashboardStats() {
     recentSales,
   };
 }
-
-module.exports = { createSale, getAll, getSaleDetail, getDashboardStats };

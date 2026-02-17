@@ -1,7 +1,7 @@
-const { getDatabase } = require('./connection');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from './connection.js';
+import { v4 as uuidv4 } from 'uuid';
 
-function getAll(filters = {}) {
+export function getAll(filters = {}) {
   const db = getDatabase();
   let sql = 'SELECT * FROM inventory_items WHERE deleted_at IS NULL';
   const params = [];
@@ -19,12 +19,12 @@ function getAll(filters = {}) {
   return db.prepare(sql).all(...params);
 }
 
-function getOne(id) {
+export function getOne(id) {
   const db = getDatabase();
   return db.prepare('SELECT * FROM inventory_items WHERE id = ? AND deleted_at IS NULL').get(id);
 }
 
-function getCategories() {
+export function getCategories() {
   const db = getDatabase();
   const rows = db.prepare(
     'SELECT DISTINCT category FROM inventory_items WHERE deleted_at IS NULL ORDER BY category'
@@ -32,7 +32,7 @@ function getCategories() {
   return rows.map(r => r.category);
 }
 
-function create(item) {
+export function create(item) {
   const db = getDatabase();
   const id = uuidv4();
   const now = new Date().toISOString();
@@ -43,7 +43,7 @@ function create(item) {
   return { id, name: item.name, sku: item.sku || null, price: item.price, quantity: item.quantity || 0, category: item.category || 'General', created_at: now, updated_at: now, deleted_at: null };
 }
 
-function update(id, updates) {
+export function update(id, updates) {
   const db = getDatabase();
   const now = new Date().toISOString();
   const fields = [];
@@ -66,10 +66,8 @@ function update(id, updates) {
   return getOne(id);
 }
 
-function softDelete(id) {
+export function softDelete(id) {
   const db = getDatabase();
   const now = new Date().toISOString();
   db.prepare('UPDATE inventory_items SET deleted_at = ?, updated_at = ? WHERE id = ?').run(now, now, id);
 }
-
-module.exports = { getAll, getOne, getCategories, create, update, softDelete };

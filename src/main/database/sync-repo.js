@@ -1,7 +1,7 @@
-const { getDatabase } = require('./connection');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from './connection.js';
+import { v4 as uuidv4 } from 'uuid';
 
-function logChange(tableName, recordId, operation, payload) {
+export function logChange(tableName, recordId, operation, payload) {
   const db = getDatabase();
   const id = uuidv4();
   db.prepare(`
@@ -10,17 +10,17 @@ function logChange(tableName, recordId, operation, payload) {
   `).run(id, tableName, recordId, operation, JSON.stringify(payload));
 }
 
-function getPending() {
+export function getPending() {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM sync_log WHERE synced = 0 ORDER BY created_at ASC'
   ).all();
 }
 
-function markSynced(ids) {
+export function markSynced(ids) {
   const db = getDatabase();
   const stmt = db.prepare(
-    'UPDATE sync_log SET synced = 1, synced_at = datetime(\'now\') WHERE id = ?'
+    "UPDATE sync_log SET synced = 1, synced_at = datetime('now') WHERE id = ?"
   );
   const markAll = db.transaction((idList) => {
     for (const id of idList) {
@@ -30,7 +30,7 @@ function markSynced(ids) {
   markAll(ids);
 }
 
-function getStatus() {
+export function getStatus() {
   const db = getDatabase();
   const pending = db.prepare('SELECT COUNT(*) as count FROM sync_log WHERE synced = 0').get();
   const lastSync = db.prepare(
@@ -41,5 +41,3 @@ function getStatus() {
     lastSyncedAt: lastSync?.synced_at || null,
   };
 }
-
-module.exports = { logChange, getPending, markSynced, getStatus };

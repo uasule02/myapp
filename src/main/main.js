@@ -1,15 +1,17 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const { runMigrations } = require('./database/migrations');
-const { registerAllHandlers } = require('./ipc-handlers');
-const { closeDatabase } = require('./database/connection');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import { runMigrations } from './database/migrations.js';
+import { registerAllHandlers } from './ipc-handlers.js';
+import { closeDatabase } from './database/connection.js';
+import squirrelStartup from 'electron-squirrel-startup';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+if (squirrelStartup) {
   app.quit();
 }
 
 let mainWindow;
+let handlersRegistered = false;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -26,25 +28,25 @@ const createWindow = () => {
     show: false,
   });
 
-  // Show window when ready to prevent flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 
-  // Load the renderer
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-
-  // Register IPC handlers
-  registerAllHandlers(mainWindow);
 };
 
 app.on('ready', () => {
-  // Initialize database
   runMigrations();
+
+  if (!handlersRegistered) {
+    registerAllHandlers(() => mainWindow);
+    handlersRegistered = true;
+  }
+
   createWindow();
 });
 

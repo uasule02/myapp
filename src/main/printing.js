@@ -1,6 +1,6 @@
-const { BrowserWindow } = require('electron');
-const salesRepo = require('./database/sales-repo');
-const settingsRepo = require('./database/settings-repo');
+import { BrowserWindow } from 'electron';
+import * as salesRepo from './database/sales-repo.js';
+import * as settingsRepo from './database/settings-repo.js';
 
 function generateReceiptHTML(sale, settings) {
   const currency = settings.currency_symbol || '\u20A6';
@@ -64,7 +64,7 @@ function generateReceiptHTML(sale, settings) {
 </body></html>`;
 }
 
-async function printReceipt(saleId) {
+export async function printReceipt(saleId) {
   const sale = salesRepo.getSaleDetail(saleId);
   if (!sale) throw new Error('Sale not found');
 
@@ -96,7 +96,7 @@ async function printReceipt(saleId) {
     }
 
     printWindow.webContents.print(printOptions, (success, failureReason) => {
-      printWindow.close();
+      printWindow.destroy();
       if (success) {
         resolve({ success: true });
       } else {
@@ -106,7 +106,7 @@ async function printReceipt(saleId) {
   });
 }
 
-async function getAvailablePrinters(mainWindow) {
+export async function getAvailablePrinters(mainWindow) {
   if (mainWindow) {
     const printers = await mainWindow.webContents.getPrintersAsync();
     return printers.map(p => ({ name: p.name, isDefault: p.isDefault }));
@@ -114,11 +114,9 @@ async function getAvailablePrinters(mainWindow) {
   return [];
 }
 
-function getReceiptHTML(saleId) {
+export function getReceiptHTML(saleId) {
   const sale = salesRepo.getSaleDetail(saleId);
   if (!sale) return null;
   const settings = settingsRepo.getAllAsMap();
   return generateReceiptHTML(sale, settings);
 }
-
-module.exports = { printReceipt, getAvailablePrinters, getReceiptHTML };

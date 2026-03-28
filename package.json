@@ -1,24 +1,33 @@
 {
-  "name": "myapp",
+  "name": "pos-system",
+  "productName": "POS System",
   "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
+  "description": "Offline Inventory & Sales System for Small Business",
+  "main": ".vite/build/main.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "eject": "expo eject"
-  },
-  "dependencies": {
-    "expo": "~45.0.0",
-    "expo-status-bar": "~1.3.0",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "react-native": "0.68.2",
-    "react-native-web": "0.17.7"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.9"
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@electron-forge/plugin-vite": "^7.6.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron": "^33.0.0",
+    "electron-rebuild": "^3.2.9"
   },
-  "private": true
+  "dependencies": {
+    "antd": "^5.22.0",
+    "axios": "^1.7.0",
+    "better-sqlite3": "^11.6.0",
+    "dayjs": "^1.11.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.28.0",
+    "uuid": "^11.0.0"
+  }
 }
